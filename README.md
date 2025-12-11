@@ -50,7 +50,6 @@ uvicorn main:app --reload --port 8080
 |----------|-------------|
 | `GRAFANA_URL` | Grafana instance URL (e.g., `https://your-org.grafana.net`) |
 | `GRAFANA_TOKEN` | Grafana API token with viewer permissions |
-| `PORT` | Server port (default: 8080) |
 
 ## API Endpoints
 
