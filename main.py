@@ -1,13 +1,18 @@
-"""
-GraphScore Mobile - Mobile Dashboard Viewer
-"""
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-import httpx
-import os
+"""GraphScore Mobile - Mobile Dashboard Viewer for Grafana."""
 
-app = FastAPI(title="GraphScore Mobile", version="1.0.0")
+import os
+from datetime import datetime, timezone
+
+import httpx
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, JSONResponse
+
+app = FastAPI(
+    title="GraphScore Mobile",
+    description="Mobile-optimized dashboard viewer for Grafana",
+    version="1.0.0",
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,17 +25,19 @@ app.add_middleware(
 GRAFANA_URL = os.getenv("GRAFANA_URL", "https://graphscore.grafana.net")
 GRAFANA_TOKEN = os.getenv("GRAFANA_TOKEN", "")
 
-@app.get("/")
-async def root():
-    return HTMLResponse("""
-<!DOCTYPE html>
-<html>
+
+@app.get("/", response_class=HTMLResponse)
+async def root() -> HTMLResponse:
+    """Serve the mobile dashboard UI."""
+    return HTMLResponse("""<!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <title>GraphScore Mobile</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
+        body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: #eee;
@@ -95,6 +102,7 @@ async def root():
             cursor: pointer;
             margin-top: 16px;
         }
+        .btn:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
@@ -105,7 +113,7 @@ async def root():
             <div class="subtitle">Dashboard Viewer</div>
         </div>
     </div>
-    
+
     <div class="card">
         <div class="status-row">
             <span class="status-label">API Status</span>
@@ -120,84 +128,108 @@ async def root():
             <span class="status-value" id="dashboard-count">-</span>
         </div>
     </div>
-    
+
     <div class="card">
-        <h3 style="margin-bottom: 16px;">📈 Dashboards</h3>
+        <h3 style="margin-bottom: 16px;">Dashboards</h3>
         <div id="dashboard-list" class="loading">Loading dashboards...</div>
     </div>
-    
-    <button class="btn" onclick="loadDashboards()">🔄 Refresh</button>
-    
+
+    <button class="btn" onclick="loadDashboards()">Refresh</button>
+
     <script>
         async function loadDashboards() {
             const listEl = document.getElementById('dashboard-list');
             const statusEl = document.getElementById('grafana-status');
             const countEl = document.getElementById('dashboard-count');
-            
+
             listEl.innerHTML = '<div class="loading">Loading...</div>';
-            
+
             try {
                 const resp = await fetch('/api/dashboards');
                 const data = await resp.json();
-                
+
                 if (data.error) {
                     statusEl.innerHTML = '<span class="status-warn">● ' + data.error + '</span>';
                     listEl.innerHTML = '<div class="error">' + data.error + '</div>';
                     countEl.textContent = '0';
                     return;
                 }
-                
+
                 statusEl.innerHTML = '<span class="status-ok">● Connected</span>';
                 countEl.textContent = data.dashboards.length;
-                
+
                 if (data.dashboards.length === 0) {
                     listEl.innerHTML = '<div style="color:#888;text-align:center;padding:20px;">No dashboards yet. Create one in Grafana!</div>';
                     return;
                 }
-                
+
                 listEl.innerHTML = data.dashboards.map(d => `
                     <div class="dashboard-item" onclick="window.open('${data.grafana_url}/d/${d.uid}', '_blank')">
                         <div class="dashboard-title">${d.title}</div>
                         <div class="dashboard-meta">${d.type || 'dashboard'} • ${d.folderTitle || 'General'}</div>
                     </div>
                 `).join('');
-                
+
             } catch (e) {
                 statusEl.innerHTML = '<span class="status-warn">● Error</span>';
                 listEl.innerHTML = '<div class="error">Failed to load: ' + e.message + '</div>';
             }
         }
-        
+
         loadDashboards();
     </script>
 </body>
-</html>
-    """)
+</html>""")
+
 
 @app.get("/health")
-async def health():
-    return {"status": "healthy", "service": "graphscore-mobile", "grafana": GRAFANA_URL}
+async def health() -> dict[str, str]:
+    """Health check endpoint."""
+    return {
+        "status": "healthy",
+        "service": "graphscore-mobile",
+        "grafana": GRAFANA_URL,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+
 
 @app.get("/api/dashboards")
-async def list_dashboards():
+async def list_dashboards() -> JSONResponse:
+    """List available Grafana dashboards."""
     if not GRAFANA_TOKEN:
-        return {"error": "Token not configured", "dashboards": [], "grafana_url": GRAFANA_URL}
-    
+        return JSONResponse(
+            content={"error": "Token not configured", "dashboards": [], "grafana_url": GRAFANA_URL}
+        )
+
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.get(
                 f"{GRAFANA_URL}/api/search?type=dash-db",
                 headers={"Authorization": f"Bearer {GRAFANA_TOKEN}"},
-                timeout=10.0
             )
             if resp.status_code == 200:
-                return {"dashboards": resp.json(), "grafana_url": GRAFANA_URL}
-            else:
-                return {"error": f"Grafana returned {resp.status_code}", "dashboards": [], "grafana_url": GRAFANA_URL}
-    except Exception as e:
-        return {"error": str(e), "dashboards": [], "grafana_url": GRAFANA_URL}
+                return JSONResponse(
+                    content={"dashboards": resp.json(), "grafana_url": GRAFANA_URL}
+                )
+            return JSONResponse(
+                content={
+                    "error": f"Grafana returned {resp.status_code}",
+                    "dashboards": [],
+                    "grafana_url": GRAFANA_URL,
+                }
+            )
+    except httpx.TimeoutException:
+        return JSONResponse(
+            content={"error": "Request timeout", "dashboards": [], "grafana_url": GRAFANA_URL}
+        )
+    except httpx.RequestError as e:
+        return JSONResponse(
+            content={"error": str(e), "dashboards": [], "grafana_url": GRAFANA_URL}
+        )
+
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT", 8080))
+
+    port = int(os.getenv("PORT", "8080"))
     uvicorn.run(app, host="0.0.0.0", port=port)
