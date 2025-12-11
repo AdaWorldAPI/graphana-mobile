@@ -1,6 +1,6 @@
 """
-GraphScore Mobile - Mobile Dashboard Interface
-FastAPI backend serving mobile-optimized monitoring dashboards
+GraphScore Mobile - Mobile Dashboard Demo
+FastAPI backend serving mobile-optimized dashboards
 """
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
