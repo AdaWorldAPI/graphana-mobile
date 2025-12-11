@@ -1,31 +1,22 @@
-# GraphScore Live Dashboard
+# GraphScore Mobile
 
-Real-time Microsoft 365 Secure Score Dashboard with Grafana-style visualization that pulls live data from Microsoft Graph API on every request.
+Mobile-optimized dashboard viewer for Grafana with a responsive, touch-friendly interface.
 
 ## Features
 
-- **Live Data**: Every page load fetches fresh data from Microsoft Graph API
-- **API Proof Banner**: Shows tenant ID, API timestamp, and fetch latency
-- **Grafana-Style UI**: Dark theme, responsive, mobile-optimized
-- **Auto-Refresh**: Page auto-refreshes every 60 seconds
-- **Zero Cache**: No caching - always live tenant data
-
-## Proof of Live Data
-
-The dashboard displays real-time proof:
-
-- Tenant ID (from API response)
-- API Timestamp (when Microsoft computed the score)
-- Fetch Time (milliseconds to retrieve data)
-- Server Time (current UTC time)
+- Mobile-first responsive design
+- Grafana dashboard integration
+- FastAPI backend with async support
+- Railway deployment ready
+- Non-root container execution
 
 ## Quick Start
 
 ### Prerequisites
 
 - Python 3.11+
-- Azure AD application with `SecurityEvents.Read.All` permission
-- Microsoft 365 tenant
+- Grafana Cloud account or self-hosted Grafana instance
+- API token with dashboard read permissions
 
 ### Local Development
 
@@ -43,7 +34,7 @@ pip install -r requirements.txt
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your Azure credentials
+# Edit .env with your Grafana credentials
 
 # Run
 uvicorn main:app --reload --port 8080
@@ -57,31 +48,25 @@ uvicorn main:app --reload --port 8080
 
 | Variable | Description |
 |----------|-------------|
-| `AZURE_CLIENT_ID` | Azure AD application (client) ID |
-| `AZURE_TENANT_ID` | Azure AD directory (tenant) ID |
-| `AZURE_CLIENT_SECRET` | Azure AD client secret |
+| `GRAFANA_URL` | Grafana instance URL (e.g., `https://your-org.grafana.net`) |
+| `GRAFANA_TOKEN` | Grafana API token with viewer permissions |
+| `PORT` | Server port (default: 8080) |
 
 ## API Endpoints
 
 | Endpoint | Description | Response |
 |----------|-------------|----------|
-| `/` | Live dashboard | HTML |
-| `/api/score` | Score data | JSON |
+| `/` | Mobile dashboard UI | HTML |
+| `/api/dashboards` | List available dashboards | JSON |
 | `/health` | Health check | JSON |
+| `/docs` | OpenAPI documentation | HTML |
 
 ## Security
 
-- OAuth2 client credentials flow
 - Secrets via environment variables only
-- Read-only Microsoft Graph API access
+- Read-only Grafana API access
 - Non-root container execution
-- No credential caching
-
-## Architecture
-
-```
-Request -> FastAPI -> Azure AD (OAuth2) -> Microsoft Graph API -> Response
-```
+- CORS middleware configured
 
 ## License
 
@@ -89,4 +74,4 @@ MIT
 
 ---
 
-Powered by Microsoft Graph API
+Powered by Grafana
