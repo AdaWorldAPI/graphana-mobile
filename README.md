@@ -1,47 +1,92 @@
-# 📊 GraphScore Live Dashboard
+# GraphScore Live Dashboard
 
-**Real-time Microsoft 365 Secure Score Dashboard** - Grafana-style visualization that pulls live data from Microsoft Graph API on every request.
+Real-time Microsoft 365 Secure Score Dashboard with Grafana-style visualization that pulls live data from Microsoft Graph API on every request.
 
-## 🔥 Features
+## Features
 
-- **Live Data**: Every page load fetches fresh data from `graph.microsoft.com/v1.0/security/secureScores`
-- **API Proof Banner**: Shows tenant ID, API timestamp, and fetch latency to prove real-time data
+- **Live Data**: Every page load fetches fresh data from Microsoft Graph API
+- **API Proof Banner**: Shows tenant ID, API timestamp, and fetch latency
 - **Grafana-Style UI**: Dark theme, responsive, mobile-optimized
 - **Auto-Refresh**: Page auto-refreshes every 60 seconds
 - **Zero Cache**: No caching - always live tenant data
 
-## 🔐 Proof of Live Data
+## Proof of Live Data
 
-The dashboard prominently displays:
+The dashboard displays real-time proof:
+
 - Tenant ID (from API response)
 - API Timestamp (when Microsoft computed the score)
-- Fetch Time (ms to retrieve data)
-- Current Server Time (UTC)
+- Fetch Time (milliseconds to retrieve data)
+- Server Time (current UTC time)
 
-This proves the data is pulled live, not from any cache or static file.
+## Quick Start
 
-## 🚀 Deploy to Railway
+### Prerequisites
+
+- Python 3.11+
+- Azure AD application with `SecurityEvents.Read.All` permission
+- Microsoft 365 tenant
+
+### Local Development
+
+```bash
+# Clone and setup
+git clone <repository-url>
+cd graphana-mobile
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your Azure credentials
+
+# Run
+uvicorn main:app --reload --port 8080
+```
+
+### Deploy to Railway
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template)
 
-### Environment Variables Required:
-```
-AZURE_CLIENT_ID=your-app-client-id
-AZURE_TENANT_ID=your-tenant-id
-AZURE_CLIENT_SECRET=your-client-secret
-```
+**Required Environment Variables:**
 
-## 📱 Endpoints
+| Variable | Description |
+|----------|-------------|
+| `AZURE_CLIENT_ID` | Azure AD application (client) ID |
+| `AZURE_TENANT_ID` | Azure AD directory (tenant) ID |
+| `AZURE_CLIENT_SECRET` | Azure AD client secret |
 
-- `/` - Live dashboard (HTML)
-- `/api/score` - JSON API with live score data
-- `/health` - Health check endpoint
+## API Endpoints
 
-## 🛡️ Security
+| Endpoint | Description | Response |
+|----------|-------------|----------|
+| `/` | Live dashboard | HTML |
+| `/api/score` | Score data | JSON |
+| `/health` | Health check | JSON |
+
+## Security
 
 - OAuth2 client credentials flow
-- No secrets in code (environment variables)
-- Read-only Graph API access
+- Secrets via environment variables only
+- Read-only Microsoft Graph API access
+- Non-root container execution
+- No credential caching
+
+## Architecture
+
+```
+Request -> FastAPI -> Azure AD (OAuth2) -> Microsoft Graph API -> Response
+```
+
+## License
+
+MIT
 
 ---
-Built for DATAGROUP SE | Powered by Microsoft Graph API
+
+Powered by Microsoft Graph API
