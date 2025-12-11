@@ -1,6 +1,6 @@
 """
-Ada Graphana Mobile - Grafana Dashboard for Mobile
-FastAPI backend serving mobile-optimized Grafana dashboards
+GraphScore Mobile - Mobile Dashboard Interface
+FastAPI backend serving mobile-optimized monitoring dashboards
 """
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import httpx
 import os
 
-app = FastAPI(title="Ada Graphana Mobile", version="1.0.0")
+app = FastAPI(title="GraphScore Mobile", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,7 +28,7 @@ async def root():
     <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Ada Graphana Mobile</title>
+        <title>GraphScore Mobile</title>
         <style>
             body { font-family: system-ui; background: #1a1a2e; color: #eee; margin: 0; padding: 20px; }
             h1 { color: #00d4ff; }
@@ -38,7 +38,7 @@ async def root():
         </style>
     </head>
     <body>
-        <h1>🌸 Ada Graphana Mobile</h1>
+        <h1>📊 GraphScore Mobile</h1>
         <div class="status ok">
             <strong>Status:</strong> Online<br>
             <strong>Version:</strong> 1.0.0
@@ -55,7 +55,7 @@ async def root():
 
 @app.get("/health")
 async def health():
-    return {"status": "healthy", "service": "ada-graphana-mobile"}
+    return {"status": "healthy", "service": "graphscore-mobile"}
 
 @app.get("/api/dashboards")
 async def list_dashboards():
